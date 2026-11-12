@@ -6,19 +6,21 @@
 
 <style>
     .oas-page {
-        background: #F5F5F5;
-        min-height: 80vh;
-        padding: 38px 0 60px;
+        max-width: 1160px;
+        min-height: 0;
+        margin: 0 auto;
+        padding: 24px 0 32px;
+        background: transparent;
         color: #333333;
     }
 
     .oas-header {
-        background: #FFFFFF;
-        border-left: 6px solid #CC092F;
-        border-radius: 12px;
-        padding: 30px;
-        margin-bottom: 28px;
-        box-shadow: 0 4px 15px rgba(0,0,0,.04);
+        margin-bottom: 22px;
+        padding: clamp(22px, 4vw, 34px);
+        border: 1px solid #F0DEE2;
+        border-radius: 20px;
+        background: linear-gradient(120deg, #FFF1F4 0%, #fff 75%);
+        box-shadow: 0 10px 28px rgba(48, 25, 31, .045);
     }
 
     .oas-header h1 {
@@ -34,11 +36,17 @@
 
     .oas-card {
         background: #FFFFFF;
-        border: 1px solid #E5E5E5;
-        border-radius: 12px;
-        padding: 22px;
-        margin-bottom: 18px;
-        box-shadow: 0 4px 14px rgba(0,0,0,.035);
+        border: 1px solid #EAE3E5;
+        border-radius: 16px;
+        padding: clamp(18px, 3vw, 24px);
+        margin-bottom: 16px;
+        box-shadow: 0 7px 20px rgba(34, 20, 25, .04);
+        transition: border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .oas-card:hover {
+        border-color: #E8C4CC;
+        box-shadow: 0 12px 25px rgba(34, 20, 25, .07);
     }
 
     .oas-card h5 {
@@ -148,6 +156,64 @@
     .oas-empty h5 {
         color: #333333;
         font-weight: 700;
+    }
+
+    .oas-page > .container {
+        max-width: 1160px;
+    }
+
+    .oas-card > .row {
+        grid-template-columns: minmax(0, 1fr) minmax(220px, .34fr);
+        align-items: center;
+        gap: 24px;
+    }
+
+    .oas-card > .row > .col-lg-8,
+    .oas-card > .row > .col-lg-4 {
+        grid-column: auto;
+    }
+
+    .oas-select {
+        width: 100%;
+        padding: 9px 11px;
+        background: #fff;
+    }
+
+    .oas-empty {
+        border-color: #E5CDD2;
+        border-radius: 17px;
+        background: #FFFCFC;
+    }
+
+    .oas-status {
+        padding: 7px 11px;
+    }
+
+    .btn-oas,
+    .btn-oas-outline {
+        display: inline-flex;
+        min-height: 42px;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 14px;
+        text-decoration: none;
+        transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
+    }
+
+    .btn-oas:hover,
+    .btn-oas-outline:hover {
+        transform: translateY(-1px);
+    }
+
+    @media (max-width: 768px) {
+        .oas-page {
+            padding: 16px 0 24px;
+        }
+
+        .oas-card > .row {
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
     }
 
     @media(max-width: 768px) {

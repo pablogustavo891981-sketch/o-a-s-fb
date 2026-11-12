@@ -1,12 +1,14 @@
 @extends('layouts.app')
 
+@section('title', 'Painel administrativo')
+
 @section('content')
 
 <style>
     .admin-container {
-        max-width: 1200px;
+        max-width: 1160px;
         margin: 0 auto;
-        padding: 18px 15px 40px;
+        padding: 24px 15px 32px;
         color: #333;
     }
 
@@ -178,9 +180,69 @@
         color: #777;
     }
 
+    .admin-header {
+    margin-bottom: 24px;
+    padding: clamp(22px, 4vw, 34px);
+    border: 1px solid #F0DEE2;
+    border-radius: 20px;
+    background: linear-gradient(120deg, #FFF1F4 0%, #fff 75%);
+    box-shadow: 0 10px 28px rgba(48, 25, 31, .045);
+    }
+
+    .admin-header h1 {
+    color: #292929;
+    }
+
+    .admin-section-title {
+    margin-top: 28px;
+    font-size: 18px;
+    }
+
+    .admin-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+    gap: 14px;
+    }
+
+    .admin-card {
+    border-color: #EAE3E5;
+    border-radius: 16px;
+    box-shadow: 0 7px 20px rgba(34, 20, 25, .04);
+    }
+
+    .admin-card strong {
+    font-size: clamp(25px, 3vw, 30px);
+    line-height: 1.2;
+    }
+
+    .admin-shortcuts {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+    }
+
+    .admin-shortcut {
+    border-radius: 14px;
+    }
+
+    .admin-table-container {
+    border-color: #EAE3E5;
+    border-radius: 16px;
+    box-shadow: 0 7px 20px rgba(34, 20, 25, .035);
+    }
+
+    .admin-table th {
+    background: #FFF7F8;
+    }
+
+    .admin-table tbody tr:last-child td {
+    border-bottom: 0;
+    }
+
+    .admin-empty {
+    padding: 30px 22px;
+    }
+
     @media (max-width: 600px) {
-        .admin-header h1 {
-            font-size: 23px;
+    .admin-header h1 {
+        font-size: 23px;
         }
 
         .admin-container {

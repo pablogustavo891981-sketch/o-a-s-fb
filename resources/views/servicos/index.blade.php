@@ -275,6 +275,66 @@
         color: white;
     }
 
+    .servicos-page {
+        max-width: 1160px;
+        min-height: 0;
+        margin: 0 auto;
+        padding: 24px 0 32px;
+        background: transparent;
+    }
+
+    .servicos-banner {
+        margin-bottom: 22px;
+        border: 1px solid #F0DEE2;
+        border-left: 1px solid #F0DEE2;
+        border-radius: 20px;
+        background: linear-gradient(120deg, #FFF1F4 0%, #fff 75%);
+        box-shadow: 0 10px 28px rgba(48, 25, 31, .045);
+    }
+
+    .filtro-card {
+        margin-bottom: 24px;
+        border-color: #EAE3E5;
+        border-radius: 16px;
+        box-shadow: 0 7px 20px rgba(34, 20, 25, .035);
+    }
+
+    .servico-card {
+        height: 100%;
+        border-color: #EAE3E5;
+        border-radius: 17px;
+        box-shadow: 0 7px 20px rgba(34, 20, 25, .04);
+    }
+
+    .servico-card .card-body {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .servico-card .card-body > div:last-child {
+        margin-top: auto;
+    }
+
+    .servico-imagem,
+    .servico-sem-imagem {
+        height: 200px;
+    }
+
+    .servicos-vazio {
+        border-color: #E5CDD2;
+        border-radius: 17px;
+        background: #FFFCFC;
+    }
+
+    .servicos-contagem {
+        padding: 6px 10px;
+        border: 1px solid #F0E7E9;
+        border-radius: 999px;
+        background: #fff;
+    }
+
     @media (max-width: 768px) {
         .servicos-banner {
             padding: 25px;
@@ -282,6 +342,17 @@
 
         .servicos-banner h1 {
             font-size: 24px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .servicos-page {
+            padding: 16px 0 24px;
+        }
+
+        .servicos-banner,
+        .filtro-card {
+            padding: 18px;
         }
     }
 
