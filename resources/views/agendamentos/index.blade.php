@@ -162,6 +162,42 @@
         max-width: 1160px;
     }
 
+    .oas-header {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .oas-header::after {
+        position: absolute;
+        right: -44px;
+        bottom: -96px;
+        width: 210px;
+        height: 210px;
+        border: 1px solid rgba(204, 9, 47, .08);
+        border-radius: 50%;
+        box-shadow: 0 0 0 24px rgba(204, 9, 47, .025), 0 0 0 48px rgba(94, 80, 161, .025);
+        content: "";
+        pointer-events: none;
+    }
+
+    .oas-header h1,
+    .oas-header p {
+        position: relative;
+        z-index: 1;
+    }
+
+    .oas-header h1 {
+        color: #292929;
+        font-size: clamp(24px, 3vw, 32px);
+    }
+
+    .oas-muted {
+        padding: 6px 10px;
+        border: 1px solid #F0E7E9;
+        border-radius: 999px;
+        background: #fff;
+    }
+
     .oas-card > .row {
         grid-template-columns: minmax(0, 1fr) minmax(220px, .34fr);
         align-items: center;
@@ -187,6 +223,28 @@
 
     .oas-status {
         padding: 7px 11px;
+    }
+
+    .status-pendente {
+        background: #FFF4D6;
+        color: #805A00;
+    }
+
+    .status-confirmado,
+    .status-concluido {
+        background: #E8F6ED;
+        color: #176B35;
+    }
+
+    .status-recusado,
+    .status-cancelado {
+        background: #F0F0F0;
+        color: #555;
+    }
+
+    .status-em_andamento {
+        background: #F3EDFF;
+        color: #5E50A1;
     }
 
     .btn-oas,

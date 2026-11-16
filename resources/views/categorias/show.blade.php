@@ -282,6 +282,76 @@
             font-weight: 600;
         }
 
+        html.modo-escuro .category-page-heading p,
+        html.modo-escuro .category-section-heading,
+        html.modo-escuro .category-page-heading h1,
+        html.modo-escuro .category-name,
+        html.modo-escuro .category-metadata-item dd {
+            color: #f2ecee;
+        }
+
+        html.modo-escuro .category-stat-label,
+        html.modo-escuro .category-metadata-item dt {
+            color: #c4bbbe;
+        }
+
+        html.modo-escuro .category-back,
+        html.modo-escuro .category-eyebrow {
+            color: #ff829b;
+        }
+
+        html.modo-escuro .category-card {
+            border-color: #41383b;
+            background: #242123;
+            box-shadow: 0 16px 38px rgba(0, 0, 0, .2);
+        }
+
+        html.modo-escuro .category-card-header {
+            border-color: #41383b;
+            background: linear-gradient(125deg, #302629 0%, #242123 72%);
+        }
+
+        html.modo-escuro .category-symbol,
+        html.modo-escuro .category-stat-icon {
+            border-color: #51484b;
+            background: #302c2e;
+        }
+
+        html.modo-escuro .category-description {
+            border-color: #41383b;
+            background: #302c2e;
+        }
+
+        html.modo-escuro .category-description p {
+            color: #d3cbce;
+        }
+
+        html.modo-escuro .category-status-active {
+            background: #183825;
+            color: #9ce0b1;
+        }
+
+        html.modo-escuro .category-status-inactive {
+            background: #3a3638;
+            color: #d3cbce;
+        }
+
+        html.modo-escuro .category-stat-announcements {
+            border-color: #65404a;
+            background: linear-gradient(135deg, #39252a, #302326);
+            color: #ff829b;
+        }
+
+        html.modo-escuro .category-stat-services {
+            border-color: #514b70;
+            background: linear-gradient(135deg, #2c2939, #272530);
+            color: #b6aef0;
+        }
+
+        html.modo-escuro .category-metadata {
+            border-color: #41383b;
+        }
+
         @media (max-width: 640px) {
             .category-card-header {
                 flex-direction: column;
@@ -366,7 +436,7 @@
                             </span>
                             <div>
                                 <p class="category-stat-label">Anúncios</p>
-                                <strong class="category-stat-value">{{ $categoria->anuncios()->count() }}</strong>
+                                <strong class="category-stat-value">{{ $categoria->anuncios_count }}</strong>
                             </div>
                         </div>
 
@@ -380,7 +450,7 @@
                             </span>
                             <div>
                                 <p class="category-stat-label">Serviços</p>
-                                <strong class="category-stat-value">{{ $categoria->servicos()->count() }}</strong>
+                                <strong class="category-stat-value">{{ $categoria->servicos_count }}</strong>
                             </div>
                         </div>
                     </div>

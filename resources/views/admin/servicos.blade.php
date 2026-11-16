@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Gerenciamento de serviços')
+
 @section('content')
 
 <style>
@@ -154,15 +156,172 @@
         margin-top: 20px;
     }
 
+    .admin-container {
+        max-width: 1160px;
+        padding: 24px 15px 32px;
+    }
+
+    .admin-header {
+        margin-bottom: 22px;
+        padding: clamp(22px, 4vw, 34px);
+        border: 1px solid #F0DEE2;
+        border-radius: 20px;
+        background: linear-gradient(120deg, #FFF1F4 0%, #fff 75%);
+        box-shadow: 0 10px 28px rgba(48, 25, 31, .045);
+    }
+
+    .admin-header h1 {
+        margin: 0 0 5px;
+        color: #292929;
+        font-size: clamp(23px, 3vw, 30px);
+    }
+
+    .admin-header p {
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    .filtros {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) minmax(180px, .7fr) auto auto;
+        align-items: end;
+        margin-bottom: 16px;
+        border-color: #EAE3E5;
+        border-radius: 15px;
+        box-shadow: 0 7px 20px rgba(34, 20, 25, .035);
+    }
+
+    .filtros input,
+    .filtros select {
+        min-height: 44px;
+        padding: 10px 12px;
+        border-color: #E2DADD;
+        border-radius: 9px;
+    }
+
+    .filtros input:focus,
+    .filtros select:focus {
+        border-color: #CC092F;
+        outline: 0;
+        box-shadow: 0 0 0 3px rgba(204, 9, 47, .1);
+    }
+
+    .btn {
+        min-height: 40px;
+        padding: 9px 13px;
+        border-radius: 9px;
+        transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
+    }
+
+    .btn-primary:hover,
+    .btn-success:hover,
+    .btn-danger:hover,
+    .btn-secondary:hover {
+        transform: translateY(-1px);
+    }
+
+    .tabela-container {
+        border-color: #EAE3E5;
+        border-radius: 15px;
+        box-shadow: 0 7px 20px rgba(34, 20, 25, .035);
+    }
+
+    .tabela {
+        min-width: 900px;
+    }
+
+    .tabela th {
+        background: #FFF7F8;
+        white-space: nowrap;
+    }
+
+    .tabela tbody tr:hover {
+        background: #FFFAFB;
+    }
+
+    .tabela td strong {
+        color: #292929;
+    }
+
+    .tabela td small {
+        display: inline-block;
+        max-width: 300px;
+        margin-top: 4px;
+        color: #777;
+        line-height: 1.45;
+    }
+
+    .status-ativo {
+        background: #E8F6ED;
+        color: #176B35;
+    }
+
+    .status-inativo {
+        background: #F0F0F0;
+        color: #555;
+    }
+
+    .acoes {
+        gap: 7px;
+    }
+
+    .acoes form {
+        margin: 0;
+    }
+
+    .mensagem {
+        border: 1px solid #CBE8D1;
+        border-radius: 10px;
+    }
+
+    .erro {
+        border-color: #F1C7D0;
+    }
+
+    .admin-result-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 0 2px 12px;
+    }
+
+    .admin-result-heading h2 {
+        margin: 0;
+        color: #292929;
+        font-size: 16px;
+    }
+
+    .admin-result-heading span {
+        color: #777;
+        font-size: 12px;
+    }
+
+    .vazio {
+        padding: 34px 22px;
+    }
+
     @media (max-width: 600px) {
         .admin-container {
-            padding: 18px 10px;
+            padding: 16px 10px 24px;
         }
 
-        .admin-header h1 {
-            font-size: 23px;
+        .filtros {
+            grid-template-columns: 1fr;
+        }
+
+        .filtros .btn {
+            width: 100%;
+            text-align: center;
+        }
+
+        .admin-result-heading {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 4px;
         }
     }
+
 </style>
 
 <div class="admin-container">
@@ -192,11 +351,12 @@
         <input
             type="text"
             name="busca"
+            aria-label="Pesquisar serviços"
             placeholder="Pesquisar por nome ou descrição"
             value="{{ request('busca') }}"
         >
 
-        <select name="ativo">
+        <select name="ativo" aria-label="Filtrar por disponibilidade">
             <option value="">Todos os serviços</option>
             <option value="1" @selected(request('ativo') === '1')>
                 Ativos
@@ -215,6 +375,11 @@
         </a>
 
     </form>
+
+    <div class="admin-result-heading">
+        <h2>Serviços cadastrados</h2>
+        <span>{{ $servicos->total() }} {{ $servicos->total() === 1 ? 'serviço' : 'serviços' }}</span>
+    </div>
 
     {{-- Tabela de serviços --}}
     <div class="tabela-container">
@@ -267,7 +432,7 @@
                             </td>
 
                             <td>
-                                <span class="status">
+                                <span class="status {{ $servico->ativo ? 'status-ativo' : 'status-inativo' }}">
                                     {{ $servico->ativo ? 'Ativo' : 'Inativo' }}
                                 </span>
                             </td>

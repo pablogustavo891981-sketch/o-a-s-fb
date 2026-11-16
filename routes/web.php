@@ -1,17 +1,15 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\CategoriaController;
-use App\Http\Controllers\AnuncioController;
-use App\Http\Controllers\ServicoController;
-use App\Http\Controllers\DisponibilidadeController;
-use App\Http\Controllers\AgendamentoController;
-use App\Http\Controllers\AvaliacaoController;
 use App\Http\Controllers\AdminController;
-
+use App\Http\Controllers\AgendamentoController;
+use App\Http\Controllers\AnuncioController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AvaliacaoController;
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DisponibilidadeController;
+use App\Http\Controllers\ServicoController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,7 +23,6 @@ Route::get('/', function () {
 
 Route::view('/acessibilidade', 'acessibilidade')
     ->name('acessibilidade');
-
 
 /*
 |--------------------------------------------------------------------------
@@ -45,10 +42,10 @@ Route::middleware('guest')->group(function () {
         ->name('login');
 
     Route::post('/login', [AuthController::class, 'entrar'])
+        ->middleware('throttle:login')
         ->name('login.store');
 
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -62,27 +59,21 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'sair'])
         ->name('logout');
 
-
     // Painel principal
     Route::get('/painel', [DashboardController::class, 'index'])
         ->name('dashboard');
 
-
     // Categorias
     Route::resource('categorias', CategoriaController::class);
-
 
     // Mural de anúncios
     Route::resource('anuncios', AnuncioController::class);
 
-
     // Serviços
     Route::resource('servicos', ServicoController::class);
 
-
     // Disponibilidade dos prestadores
     Route::resource('disponibilidades', DisponibilidadeController::class);
-
 
     // Agendamentos
     Route::get('/agendamentos/horarios-disponiveis', [
@@ -98,11 +89,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('agendamentos', AgendamentoController::class)
         ->except(['edit']);
 
-
     // Avaliações
-   Route::resource('avaliacoes', AvaliacaoController::class)
-    ->parameters(['avaliacoes' => 'avaliacao']);
-
+    Route::resource('avaliacoes', AvaliacaoController::class)
+        ->parameters(['avaliacoes' => 'avaliacao']);
 
     /*
     |--------------------------------------------------------------------------
@@ -126,14 +115,12 @@ Route::middleware('auth')->group(function () {
             Route::put('/usuarios/{usuario}', 'atualizarUsuario')
                 ->name('usuarios.update');
 
-
             // Anúncios
             Route::get('/anuncios', 'anuncios')
                 ->name('anuncios');
 
             Route::put('/anuncios/{anuncio}/status', 'atualizarStatusAnuncio')
                 ->name('anuncios.status');
-
 
             // Serviços
             Route::get('/servicos', 'servicos')
@@ -142,11 +129,9 @@ Route::middleware('auth')->group(function () {
             Route::put('/servicos/{servico}/status', 'atualizarStatusServico')
                 ->name('servicos.status');
 
-
             // Agendamentos
             Route::get('/agendamentos', 'agendamentos')
                 ->name('agendamentos');
-
 
             // Avaliações
             Route::get('/avaliacoes', 'avaliacoes')

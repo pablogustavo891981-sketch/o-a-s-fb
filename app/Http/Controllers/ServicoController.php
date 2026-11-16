@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Servico;
 use App\Models\Categoria;
+use App\Models\Servico;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -161,7 +161,11 @@ class ServicoController extends Controller
         $dados = $request->validate([
             'categoria_id' => [
                 'required',
-                Rule::exists('categorias', 'id')->where('ativa', true),
+                Rule::exists('categorias', 'id')
+                    ->where(function ($query) use ($servico) {
+                        $query->where('ativa', true)
+                            ->orWhere('id', $servico->categoria_id);
+                    }),
             ],
             'nome' => ['required', 'string', 'max:255'],
             'descricao' => ['required', 'string', 'max:3000'],

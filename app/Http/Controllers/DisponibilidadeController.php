@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Disponibilidade;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class DisponibilidadeController extends Controller
 {
@@ -13,17 +12,36 @@ class DisponibilidadeController extends Controller
         $usuario = auth()->user();
 
         abort_unless(
-            $usuario && (
-                $usuario->id === $disponibilidade->usuario_id ||
-                $usuario->tipo_usuario === 'administrador'
-            ),
+            $usuario?->tipo_usuario === 'administrador' ||
+                ($usuario?->tipo_usuario === 'prestador' &&
+                    $usuario->id === $disponibilidade->usuario_id),
             403,
             'Você não tem permissão para acessar esta disponibilidade.'
         );
     }
 
+    private function autorizarGerenciamento(): void
+    {
+        abort_unless(
+            in_array(auth()->user()?->tipo_usuario, ['prestador', 'administrador'], true),
+            403,
+            'Somente prestadores podem gerenciar disponibilidades.'
+        );
+    }
+
+    private function autorizarCadastro(): void
+    {
+        abort_unless(
+            auth()->user()?->tipo_usuario === 'prestador',
+            403,
+            'Somente prestadores podem cadastrar disponibilidades.'
+        );
+    }
+
     public function index()
     {
+        $this->autorizarGerenciamento();
+
         $usuario = auth()->user();
 
         $disponibilidades = Disponibilidade::with('usuario')
@@ -40,11 +58,15 @@ class DisponibilidadeController extends Controller
 
     public function create()
     {
+        $this->autorizarCadastro();
+
         return view('disponibilidades.create');
     }
 
     public function store(Request $request)
     {
+        $this->autorizarCadastro();
+
         $dados = $request->validate([
             'dia_semana' => ['required', 'integer', 'between:0,6'],
             'hora_inicio' => ['required', 'date_format:H:i'],

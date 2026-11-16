@@ -49,6 +49,8 @@ class AgendamentoHorariosTest extends TestCase
             $table->date('data');
             $table->time('horario');
             $table->string('status');
+            $table->text('observacoes')->nullable();
+            $table->timestamps();
         });
     }
 
@@ -82,6 +84,15 @@ class AgendamentoHorariosTest extends TestCase
                 'horario' => '10:00:00',
                 'status' => 'pendente',
             ],
+            [
+                'cliente_id' => 1,
+                'prestador_id' => 2,
+                'servico_id' => 1,
+                'telefone_cliente' => '(11) 99999-1234',
+                'data' => '2026-11-10',
+                'horario' => '11:30:00',
+                'status' => 'confirmado',
+            ],
         ]);
 
         $response = $this->getJson(route('agendamentos.horarios-disponiveis', [
@@ -91,7 +102,7 @@ class AgendamentoHorariosTest extends TestCase
 
         $response->assertOk()
             ->assertExactJson([
-                'horarios' => ['09:00', '11:00'],
+                'horarios' => ['09:00'],
                 'local_atendimento' => null,
             ]);
     }
@@ -157,6 +168,7 @@ class AgendamentoHorariosTest extends TestCase
 
     public function test_it_returns_a_clear_message_when_the_selected_service_cannot_be_booked(): void
     {
+        $this->travelTo('2026-11-10 08:00:00');
         $cliente = User::factory()->make([
             'id' => 1,
             'tipo_usuario' => 'cliente',
@@ -180,5 +192,81 @@ class AgendamentoHorariosTest extends TestCase
             ->assertJsonValidationErrors([
                 'servico_id' => 'Selecione um serviço válido para agendamento.',
             ]);
+    }
+
+    public function test_it_creates_a_booking_and_rejects_a_second_request_for_the_same_slot(): void
+    {
+        $this->travelTo('2026-11-10 08:00:00');
+        $cliente = User::factory()->make([
+            'id' => 1,
+            'tipo_usuario' => 'cliente',
+        ]);
+        $this->actingAs($cliente);
+
+        $this->seedBookingData();
+
+        $payload = [
+            'servico_id' => 1,
+            'data' => '2026-11-10',
+            'horario' => '09:00',
+            'telefone_cliente' => '(11) 99999-1234',
+        ];
+
+        $response = $this->post(route('agendamentos.store'), $payload);
+
+        $response->assertRedirect(route('agendamentos.show', 1));
+        $this->assertDatabaseHas('agendamentos', [
+            'cliente_id' => 1,
+            'prestador_id' => 2,
+            'servico_id' => 1,
+            'data' => '2026-11-10 00:00:00',
+            'horario' => '09:00',
+            'status' => 'pendente',
+        ]);
+
+        $secondResponse = $this->post(route('agendamentos.store'), $payload);
+
+        $secondResponse->assertSessionHasErrors([
+            'horario' => 'Este horário já está ocupado. Escolha outro.',
+        ]);
+        $this->assertDatabaseCount('agendamentos', 1);
+    }
+
+    public function test_it_rejects_a_booking_outside_the_providers_availability(): void
+    {
+        $this->travelTo('2026-11-10 08:00:00');
+        $cliente = User::factory()->make([
+            'id' => 1,
+            'tipo_usuario' => 'cliente',
+        ]);
+        $this->actingAs($cliente);
+
+        $this->seedBookingData();
+
+        $response = $this->post(route('agendamentos.store'), [
+            'servico_id' => 1,
+            'data' => '2026-11-10',
+            'horario' => '12:00',
+            'telefone_cliente' => '(11) 99999-1234',
+        ]);
+
+        $response->assertSessionHasErrors([
+            'horario' => 'O prestador não atende nesse dia ou horário.',
+        ]);
+        $this->assertDatabaseCount('agendamentos', 0);
+    }
+
+    private function seedBookingData(): void
+    {
+        DB::table('users')->insert([
+            ['id' => 1, 'name' => 'Cliente', 'email' => 'cliente@example.com', 'password' => 'password', 'tipo_usuario' => 'cliente'],
+            ['id' => 2, 'name' => 'Prestador', 'email' => 'prestador@example.com', 'password' => 'password', 'tipo_usuario' => 'prestador'],
+        ]);
+        DB::table('servicos')->insert([
+            ['id' => 1, 'usuario_id' => 2, 'nome' => 'Atendimento', 'duracao' => 60, 'ativo' => true],
+        ]);
+        DB::table('disponibilidades')->insert([
+            ['usuario_id' => 2, 'dia_semana' => 2, 'hora_inicio' => '09:00:00', 'hora_fim' => '12:00:00', 'ativo' => true],
+        ]);
     }
 }

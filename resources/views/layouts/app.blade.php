@@ -1034,6 +1034,125 @@
     </style>
 
     @stack('styles')
+    <style>
+        html.modo-escuro .sidebar {
+            border-color: #41383b;
+            background: linear-gradient(180deg, #242123 0%, #201e20 100%);
+            scrollbar-color: #675159 transparent;
+        }
+
+        html.modo-escuro .sidebar-brand,
+        html.modo-escuro .sidebar-user {
+            border-color: #41383b;
+            background: linear-gradient(135deg, #302629 0%, #242123 100%);
+        }
+
+        html.modo-escuro .sidebar-brand-copy strong,
+        html.modo-escuro .sidebar-user-copy strong {
+            color: #f2ecee;
+        }
+
+        html.modo-escuro .sidebar-brand-copy span,
+        html.modo-escuro .sidebar-user-copy span,
+        html.modo-escuro .sidebar-title {
+            color: #bdb3b6;
+        }
+
+        html.modo-escuro .menu-link {
+            color: #d3cbce;
+        }
+
+        html.modo-escuro .menu-link:hover,
+        html.modo-escuro .sidebar-user-avatar {
+            background: #3a2a2f;
+            color: #ff829b;
+        }
+
+        html.modo-escuro .main-content,
+        html.modo-escuro .page-heading h2,
+        html.modo-escuro .form-label {
+            color: #eee9eb;
+        }
+
+        html.modo-escuro .page-heading p,
+        html.modo-escuro .text-muted {
+            color: #bdb3b6 !important;
+        }
+
+        html.modo-escuro .content-card,
+        html.modo-escuro .card {
+            border-color: #41383b;
+            background: #242123;
+            color: #eee9eb;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, .2);
+        }
+
+        html.modo-escuro .table {
+            color: #eee9eb;
+        }
+
+        html.modo-escuro .table th,
+        html.modo-escuro .table td {
+            border-color: #41383b;
+        }
+
+        html.modo-escuro .table-hover tbody tr:hover {
+            background: #302629;
+        }
+
+        html.modo-escuro .alert-success {
+            background: #183825;
+            color: #9ce0b1;
+        }
+
+        html.modo-escuro .alert-error,
+        html.modo-escuro .alert-danger,
+        html.modo-escuro .validation-errors,
+        html.modo-escuro .error-summary {
+            border-color: #65404a;
+            background: #39252a;
+            color: #ffb3bf;
+        }
+
+        html.modo-escuro .alert-warning {
+            background: #3a3220;
+            color: #f6d982;
+        }
+
+        html.modo-escuro .alert-info {
+            background: #1e3038;
+            color: #a6d9ef;
+        }
+
+        html.modo-escuro .form-select,
+        html.modo-escuro .form-control,
+        html.modo-escuro input,
+        html.modo-escuro select,
+        html.modo-escuro textarea {
+            border-color: #51484b;
+            background-color: #302c2e;
+            color: #f2ecee;
+        }
+
+        html.modo-escuro .btn-outline-secondary,
+        html.modo-escuro .btn-outline-danger {
+            border-color: #67595e;
+            background: #302c2e;
+            color: #f2ecee;
+        }
+
+        html.modo-escuro .footer {
+            border-color: #41383b;
+            background: #201e20;
+            color: #bdb3b6;
+        }
+
+        html.modo-escuro .mobile-menu-toggle {
+            border-color: #51484b;
+            background: #302c2e;
+            color: #f2ecee;
+        }
+    </style>
 </head>
 
 <body>
@@ -1279,6 +1398,27 @@
 <script>
     document.documentElement.classList.add('has-js');
 
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarScrollKey = 'oas-sidebar-scroll-top';
+
+    function salvarPosicaoSidebar() {
+        if (sidebar && window.matchMedia('(min-width: 801px)').matches) {
+            sessionStorage.setItem(sidebarScrollKey, String(sidebar.scrollTop));
+        }
+    }
+
+    if (sidebar && window.matchMedia('(min-width: 801px)').matches) {
+        const posicaoSalva = Number(sessionStorage.getItem(sidebarScrollKey));
+
+        if (Number.isFinite(posicaoSalva)) {
+            requestAnimationFrame(function () {
+                sidebar.scrollTop = posicaoSalva;
+            });
+        }
+
+        window.addEventListener('pagehide', salvarPosicaoSidebar);
+    }
+
     const menuToggle = document.getElementById('mobile-menu-toggle');
     const menuPrincipal = document.getElementById('primary-nav');
 
@@ -1302,6 +1442,7 @@
 
         menuPrincipal.addEventListener('click', function (event) {
             if (event.target.closest('a')) {
+                salvarPosicaoSidebar();
                 fecharMenu();
             }
         });

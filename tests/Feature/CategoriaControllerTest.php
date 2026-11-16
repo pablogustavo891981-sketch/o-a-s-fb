@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Categoria;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -66,5 +67,31 @@ class CategoriaControllerTest extends TestCase
             ->assertSee('Produtos e serviços de tecnologia.')
             ->assertSee(route('categorias.show', $categoria), false)
             ->assertSee(route('categorias.create'), false);
+    }
+
+    public function test_category_details_render_related_counts_loaded_by_the_controller(): void
+    {
+        $administrador = User::factory()->create([
+            'tipo_usuario' => 'administrador',
+        ]);
+        $categoria = Categoria::create([
+            'nome' => 'Tecnologia',
+            'descricao' => 'Produtos e serviços de tecnologia.',
+            'ativa' => true,
+        ]);
+        DB::table('anuncios')->insert([
+            ['categoria_id' => $categoria->id],
+            ['categoria_id' => $categoria->id],
+        ]);
+        DB::table('servicos')->insert([
+            ['categoria_id' => $categoria->id],
+        ]);
+
+        $response = $this->actingAs($administrador)
+            ->get(route('categorias.show', $categoria));
+
+        $response->assertOk()
+            ->assertSee('<strong class="category-stat-value">2</strong>', false)
+            ->assertSee('<strong class="category-stat-value">1</strong>', false);
     }
 }

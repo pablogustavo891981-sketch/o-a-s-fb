@@ -33,20 +33,37 @@ class AdminController extends Controller
     {
         $this->verificarAdministrador();
 
+        $estatisticasUsuarios = User::query()
+            ->selectRaw('COUNT(*) AS total')
+            ->selectRaw('COUNT(CASE WHEN tipo_usuario = ? THEN 1 END) AS clientes', ['cliente'])
+            ->selectRaw('COUNT(CASE WHEN tipo_usuario = ? THEN 1 END) AS prestadores', ['prestador'])
+            ->first();
+
+        $estatisticasAnuncios = Anuncio::query()
+            ->selectRaw('COUNT(*) AS total')
+            ->selectRaw('COUNT(CASE WHEN status = ? THEN 1 END) AS pendentes', ['pendente'])
+            ->first();
+
+        $estatisticasServicos = Servico::query()
+            ->selectRaw('COUNT(*) AS total')
+            ->selectRaw('COUNT(CASE WHEN ativo = 1 THEN 1 END) AS ativos')
+            ->first();
+
+        $estatisticasAgendamentos = Agendamento::query()
+            ->selectRaw('COUNT(*) AS total')
+            ->selectRaw('COUNT(CASE WHEN status = ? THEN 1 END) AS pendentes', ['pendente'])
+            ->first();
+
         $estatisticas = [
-            'usuarios' => User::count(),
-            'clientes' => User::where('tipo_usuario', 'cliente')->count(),
-            'prestadores' => User::where('tipo_usuario', 'prestador')->count(),
-
-            'anuncios' => Anuncio::count(),
-            'anuncios_pendentes' => Anuncio::where('status', 'pendente')->count(),
-
-            'servicos' => Servico::count(),
-            'servicos_ativos' => Servico::where('ativo', true)->count(),
-
-            'agendamentos' => Agendamento::count(),
-            'agendamentos_pendentes' => Agendamento::where('status', 'pendente')->count(),
-
+            'usuarios' => (int) $estatisticasUsuarios->total,
+            'clientes' => (int) $estatisticasUsuarios->clientes,
+            'prestadores' => (int) $estatisticasUsuarios->prestadores,
+            'anuncios' => (int) $estatisticasAnuncios->total,
+            'anuncios_pendentes' => (int) $estatisticasAnuncios->pendentes,
+            'servicos' => (int) $estatisticasServicos->total,
+            'servicos_ativos' => (int) $estatisticasServicos->ativos,
+            'agendamentos' => (int) $estatisticasAgendamentos->total,
+            'agendamentos_pendentes' => (int) $estatisticasAgendamentos->pendentes,
             'avaliacoes' => Avaliacao::count(),
             'categorias' => Categoria::count(),
         ];
@@ -60,7 +77,7 @@ class AdminController extends Controller
         $agendamentosRecentes = Agendamento::with([
             'cliente',
             'prestador',
-            'servico'
+            'servico',
         ])
             ->latest()
             ->limit(5)
@@ -250,7 +267,7 @@ class AdminController extends Controller
         $consulta = Agendamento::with([
             'cliente',
             'prestador',
-            'servico'
+            'servico',
         ]);
 
         if ($request->filled('status')) {
@@ -280,7 +297,7 @@ class AdminController extends Controller
         $avaliacoes = Avaliacao::with([
             'cliente',
             'prestador',
-            'agendamento.servico'
+            'agendamento.servico',
         ])
             ->latest()
             ->paginate(20);

@@ -7,8 +7,8 @@ use App\Models\Disponibilidade;
 use App\Models\Servico;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -25,7 +25,7 @@ class AgendamentoController extends Controller
         $consulta = Agendamento::with([
             'cliente',
             'prestador',
-            'servico'
+            'servico',
         ]);
 
         if ($usuario->tipo_usuario === 'cliente') {
@@ -47,7 +47,8 @@ class AgendamentoController extends Controller
      */
     public function create()
     {
-        $servicos = Servico::with('usuario')
+        $servicos = Servico::query()
+            ->select(['id', 'nome', 'preco', 'local_atendimento'])
             ->where('ativo', true)
             ->whereHas('usuario', function ($query) {
                 $query->where('tipo_usuario', 'prestador');
@@ -58,19 +59,20 @@ class AgendamentoController extends Controller
         return view('agendamentos.create', compact('servicos'));
     }
 
-    private function regrasServicoAgendamento(): array
+    private function servicoAgendavel(int $servicoId): Servico
     {
-        return [
-            'required',
-            'integer',
-            function (string $attribute, mixed $value, \Closure $fail): void {
-                $servico = Servico::with('usuario')->find($value);
+        $servico = Servico::query()
+            ->with('usuario:id,tipo_usuario')
+            ->where('ativo', true)
+            ->find($servicoId);
 
-                if (!$servico || !$servico->ativo || $servico->usuario?->tipo_usuario !== 'prestador') {
-                    $fail('Selecione um serviço válido para agendamento.');
-                }
-            },
-        ];
+        if ($servico === null || $servico->usuario?->tipo_usuario !== 'prestador') {
+            throw ValidationException::withMessages([
+                'servico_id' => 'Selecione um serviço válido para agendamento.',
+            ]);
+        }
+
+        return $servico;
     }
 
     public function horariosDisponiveis(Request $request): JsonResponse
@@ -82,21 +84,13 @@ class AgendamentoController extends Controller
         );
 
         $dados = $request->validate([
-            'servico_id' => $this->regrasServicoAgendamento(),
+            'servico_id' => ['required', 'integer'],
             'data' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
         ], [
             'servico_id' => 'Selecione um serviço válido para agendamento.',
         ]);
 
-        $servico = Servico::with('usuario')
-            ->where('ativo', true)
-            ->find($dados['servico_id']);
-
-        if (!$servico || $servico->usuario->tipo_usuario !== 'prestador') {
-            throw ValidationException::withMessages([
-                'servico_id' => 'Selecione um serviço válido para agendamento.',
-            ]);
-        }
+        $servico = $this->servicoAgendavel((int) $dados['servico_id']);
 
         $data = Carbon::createFromFormat('Y-m-d', $dados['data']);
         $disponibilidades = Disponibilidade::query()
@@ -108,7 +102,8 @@ class AgendamentoController extends Controller
 
         $reservas = Agendamento::with('servico:id,duracao')
             ->where('prestador_id', $servico->usuario_id)
-            ->whereDate('data', $data->toDateString())
+            ->where('data', '>=', $data->toDateString())
+            ->where('data', '<', $data->copy()->addDay()->toDateString())
             ->whereIn('status', ['pendente', 'confirmado', 'em_andamento'])
             ->get();
 
@@ -132,23 +127,15 @@ class AgendamentoController extends Controller
         );
 
         $dados = $request->validate([
-            'servico_id' => $this->regrasServicoAgendamento(),
+            'servico_id' => ['required', 'integer'],
             'mes' => ['required', 'date_format:Y-m'],
         ], [
             'servico_id' => 'Selecione um serviço válido para agendamento.',
         ]);
 
-        $servico = Servico::with('usuario')
-            ->where('ativo', true)
-            ->find($dados['servico_id']);
+        $servico = $this->servicoAgendavel((int) $dados['servico_id']);
 
-        if (!$servico || $servico->usuario->tipo_usuario !== 'prestador') {
-            throw ValidationException::withMessages([
-                'servico_id' => 'Selecione um serviço válido para agendamento.',
-            ]);
-        }
-
-        $inicioMes = Carbon::createFromFormat('Y-m-d', $dados['mes'] . '-01')->startOfMonth();
+        $inicioMes = Carbon::createFromFormat('Y-m-d', $dados['mes'].'-01')->startOfMonth();
         $inicioMesAtual = now()->startOfMonth();
         $limiteMes = now()->addMonths(12)->startOfMonth();
 
@@ -182,7 +169,7 @@ class AgendamentoController extends Controller
                 continue;
             }
 
-            $reservasDoDia = $reservas->get($data->toDateString(), new EloquentCollection());
+            $reservasDoDia = $reservas->get($data->toDateString(), new EloquentCollection);
             $horarios = $this->horariosParaData(
                 $servico,
                 $data,
@@ -207,14 +194,14 @@ class AgendamentoController extends Controller
         EloquentCollection $disponibilidades,
         EloquentCollection $reservas
     ): array {
-        $horarios = [];
+        $candidatos = [];
 
         foreach ($disponibilidades as $disponibilidade) {
             $inicioDisponibilidade = Carbon::parse(
-                $data->toDateString() . ' ' . $disponibilidade->getRawOriginal('hora_inicio')
+                $data->toDateString().' '.$disponibilidade->getRawOriginal('hora_inicio')
             );
             $fimDisponibilidade = Carbon::parse(
-                $data->toDateString() . ' ' . $disponibilidade->getRawOriginal('hora_fim')
+                $data->toDateString().' '.$disponibilidade->getRawOriginal('hora_fim')
             );
 
             for (
@@ -222,33 +209,56 @@ class AgendamentoController extends Controller
                 $inicio->copy()->addMinutes($servico->duracao)->lte($fimDisponibilidade);
                 $inicio->addMinutes(30)
             ) {
-                $fim = $inicio->copy()->addMinutes($servico->duracao);
-
                 if ($inicio->lte(now())) {
                     continue;
                 }
 
-                $conflitaComReserva = $reservas->contains(
-                    function (Agendamento $reserva) use ($inicio, $fim): bool {
-                        $inicioReserva = Carbon::parse(
-                            $reserva->data->toDateString() . ' ' . $reserva->horario
-                        );
-                        $fimReserva = $inicioReserva->copy()
-                            ->addMinutes($reserva->servico->duracao);
-
-                        return $inicio->lt($fimReserva) && $fim->gt($inicioReserva);
-                    }
-                );
-
-                if (!$conflitaComReserva) {
-                    $horarios[$inicio->format('H:i')] = $inicio->format('H:i');
-                }
+                $candidatos[$inicio->format('H:i')] = $inicio->copy();
             }
         }
 
-        sort($horarios);
+        ksort($candidatos);
 
-        return array_values($horarios);
+        $intervalosReservados = [];
+
+        foreach ($reservas as $reserva) {
+            $inicioReserva = Carbon::parse(
+                $reserva->data->toDateString().' '.$reserva->horario
+            )->getTimestamp();
+
+            $intervalosReservados[] = [
+                'inicio' => $inicioReserva,
+                'fim' => $inicioReserva + ($reserva->servico->duracao * 60),
+            ];
+        }
+
+        usort(
+            $intervalosReservados,
+            fn (array $a, array $b): int => $a['inicio'] <=> $b['inicio']
+        );
+
+        $horarios = [];
+        $indiceReserva = 0;
+
+        foreach ($candidatos as $horario => $inicio) {
+            $inicioTimestamp = $inicio->getTimestamp();
+            $fimTimestamp = $inicioTimestamp + ($servico->duracao * 60);
+
+            while (
+                isset($intervalosReservados[$indiceReserva]) &&
+                $intervalosReservados[$indiceReserva]['fim'] <= $inicioTimestamp
+            ) {
+                $indiceReserva++;
+            }
+
+            $intervaloAtual = $intervalosReservados[$indiceReserva] ?? null;
+
+            if ($intervaloAtual === null || $intervaloAtual['inicio'] >= $fimTimestamp) {
+                $horarios[] = $horario;
+            }
+        }
+
+        return $horarios;
     }
 
     /**
@@ -263,10 +273,7 @@ class AgendamentoController extends Controller
         );
 
         $dados = $request->validate([
-            'servico_id' => [
-                'required',
-                'exists:servicos,id',
-            ],
+            'servico_id' => ['required', 'integer'],
             'data' => [
                 'required',
                 'date',
@@ -289,26 +296,17 @@ class AgendamentoController extends Controller
         ]);
 
         $agendamento = DB::transaction(function () use ($dados) {
-
-            $servico = Servico::where('id', $dados['servico_id'])
-                ->where('ativo', true)
-                ->firstOrFail();
-
-            abort_unless(
-                $servico->usuario->tipo_usuario === 'prestador',
-                422,
-                'Este serviço não possui um prestador válido.'
-            );
+            $servico = $this->servicoAgendavel((int) $dados['servico_id']);
 
             $prestadorId = $servico->usuario_id;
 
             $inicio = Carbon::parse(
-                $dados['data'] . ' ' . $dados['horario']
+                $dados['data'].' '.$dados['horario']
             );
 
             if ($inicio->lte(now())) {
                 throw ValidationException::withMessages([
-                    'horario' => 'Escolha um horário futuro.'
+                    'horario' => 'Escolha um horário futuro.',
                 ]);
             }
 
@@ -317,7 +315,7 @@ class AgendamentoController extends Controller
             // Não permitir serviços que ultrapassem a meia-noite.
             if ($fim->toDateString() !== $inicio->toDateString()) {
                 throw ValidationException::withMessages([
-                    'horario' => 'O serviço precisa terminar no mesmo dia.'
+                    'horario' => 'O serviço precisa terminar no mesmo dia.',
                 ]);
             }
 
@@ -328,44 +326,34 @@ class AgendamentoController extends Controller
              * durante a verificação, evitando reservas simultâneas
              * dentro do mesmo conjunto de horários.
              */
-            $disponibilidades = Disponibilidade::where(
-                'usuario_id',
-                $prestadorId
-            )
+            $disponibilidades = Disponibilidade::query()
+                ->where('usuario_id', $prestadorId)
                 ->where('dia_semana', $diaSemana)
                 ->where('ativo', true)
                 ->lockForUpdate()
                 ->get();
 
-    $horarioDisponivel = $disponibilidades->contains(
-    function ($disponibilidade) use ($inicio, $fim) {
+            $horarioDisponivel = $disponibilidades->contains(
+                function (Disponibilidade $disponibilidade) use ($inicio, $fim): bool {
+                    $inicioDisponibilidade = Carbon::parse($disponibilidade->hora_inicio);
+                    $fimDisponibilidade = Carbon::parse($disponibilidade->hora_fim);
 
-        $inicioDisponibilidade = Carbon::parse(
-            $disponibilidade->hora_inicio
-        );
+                    return $inicio->format('H:i:s') >= $inicioDisponibilidade->format('H:i:s')
+                        && $fim->format('H:i:s') <= $fimDisponibilidade->format('H:i:s');
+                }
+            );
 
-        $fimDisponibilidade = Carbon::parse(
-            $disponibilidade->hora_fim
-        );
-
-        return $inicio->format('H:i:s') >=
-                $inicioDisponibilidade->format('H:i:s')
-            &&
-            $fim->format('H:i:s') <=
-                $fimDisponibilidade->format('H:i:s');
-    }
-);
-
-            if (!$horarioDisponivel) {
+            if (! $horarioDisponivel) {
                 throw ValidationException::withMessages([
-                    'horario' => 'O prestador não atende nesse dia ou horário.'
+                    'horario' => 'O prestador não atende nesse dia ou horário.',
                 ]);
             }
 
             // Buscar reservas que podem ocupar o intervalo.
             $reservas = Agendamento::with('servico')
                 ->where('prestador_id', $prestadorId)
-                ->whereDate('data', $dados['data'])
+                ->where('data', '>=', $inicio->toDateString())
+                ->where('data', '<', $inicio->copy()->startOfDay()->addDay()->toDateString())
                 ->whereIn('status', [
                     'pendente',
                     'confirmado',
@@ -376,8 +364,8 @@ class AgendamentoController extends Controller
 
             foreach ($reservas as $reserva) {
                 $inicioExistente = Carbon::parse(
-                    $reserva->data->format('Y-m-d') .
-                    ' ' .
+                    $reserva->data->format('Y-m-d').
+                    ' '.
                     $reserva->horario
                 );
 
@@ -390,7 +378,7 @@ class AgendamentoController extends Controller
                     $fim->gt($inicioExistente)
                 ) {
                     throw ValidationException::withMessages([
-                        'horario' => 'Este horário já está ocupado. Escolha outro.'
+                        'horario' => 'Este horário já está ocupado. Escolha outro.',
                     ]);
                 }
             }
@@ -423,7 +411,7 @@ class AgendamentoController extends Controller
             'cliente',
             'prestador',
             'servico',
-            'avaliacao'
+            'avaliacao',
         ]);
 
         return view('agendamentos.show', compact('agendamento'));

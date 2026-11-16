@@ -113,6 +113,48 @@
         font-weight: 700;
     }
 
+    html.modo-escuro .accessibility-heading,
+    html.modo-escuro .accessibility-option {
+        border-color: #41383b;
+        background: #242123;
+        color: #eee9eb;
+    }
+
+    html.modo-escuro .accessibility-heading {
+        background: linear-gradient(120deg, #242123 0%, #302326 100%);
+        border-left-color: #CC092F;
+    }
+
+    html.modo-escuro .accessibility-heading h2,
+    html.modo-escuro .accessibility-option h3,
+    html.modo-escuro .accessibility-preview {
+        color: #f2ecee;
+    }
+
+    html.modo-escuro .accessibility-heading p,
+    html.modo-escuro .accessibility-option p {
+        color: #c4bbbe;
+    }
+
+    html.modo-escuro .accessibility-option button.secondary {
+        border-color: #51484b;
+        background: #302c2e;
+        color: #f2ecee;
+    }
+
+    html.modo-escuro .accessibility-option button.secondary:hover {
+        background: #3a3437;
+    }
+
+    html.modo-escuro .accessibility-preview {
+        border-color: #51484b;
+        background: #302c2e;
+    }
+
+    html.modo-escuro .accessibility-status {
+        color: #8de0a8;
+    }
+
     @media (max-width: 520px) {
         .accessibility-option-actions {
             display: grid;
@@ -152,6 +194,14 @@
         <p>O alto contraste realça textos e elementos para facilitar a visualização.</p>
         <div class="accessibility-option-actions">
             <button type="button" id="alto-contraste" aria-pressed="false">Ativar alto contraste</button>
+        </div>
+    </section>
+
+    <section class="accessibility-option" aria-labelledby="modo-escuro-titulo">
+        <h3 id="modo-escuro-titulo">Modo escuro</h3>
+        <p>Use cores escuras na plataforma para tornar a navegação mais confortável. A preferência fica salva neste navegador.</p>
+        <div class="accessibility-option-actions">
+            <button type="button" id="modo-escuro" aria-pressed="false">Ativar modo escuro</button>
         </div>
     </section>
 

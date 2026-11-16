@@ -79,6 +79,8 @@ class CategoriaController extends Controller
             404
         );
 
+        $categoria->loadCount(['anuncios', 'servicos']);
+
         return view('categorias.show', compact('categoria'));
     }
 

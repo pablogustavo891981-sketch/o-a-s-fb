@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -36,7 +37,7 @@ class User extends Authenticatable
     /**
      * Anúncios publicados pelo usuário.
      */
-    public function anuncios()
+    public function anuncios(): HasMany
     {
         return $this->hasMany(Anuncio::class, 'usuario_id');
     }
@@ -44,7 +45,7 @@ class User extends Authenticatable
     /**
      * Serviços oferecidos pelo prestador.
      */
-    public function servicos()
+    public function servicos(): HasMany
     {
         return $this->hasMany(Servico::class, 'usuario_id');
     }
@@ -52,7 +53,7 @@ class User extends Authenticatable
     /**
      * Horários disponíveis do prestador.
      */
-    public function disponibilidades()
+    public function disponibilidades(): HasMany
     {
         return $this->hasMany(Disponibilidade::class, 'usuario_id');
     }
@@ -60,7 +61,7 @@ class User extends Authenticatable
     /**
      * Agendamentos realizados como cliente.
      */
-    public function agendamentosComoCliente()
+    public function agendamentosComoCliente(): HasMany
     {
         return $this->hasMany(Agendamento::class, 'cliente_id');
     }
@@ -68,7 +69,7 @@ class User extends Authenticatable
     /**
      * Agendamentos recebidos como prestador.
      */
-    public function agendamentosComoPrestador()
+    public function agendamentosComoPrestador(): HasMany
     {
         return $this->hasMany(Agendamento::class, 'prestador_id');
     }
@@ -76,7 +77,7 @@ class User extends Authenticatable
     /**
      * Avaliações recebidas pelo prestador.
      */
-    public function avaliacoesRecebidas()
+    public function avaliacoesRecebidas(): HasMany
     {
         return $this->hasMany(Avaliacao::class, 'prestador_id');
     }
