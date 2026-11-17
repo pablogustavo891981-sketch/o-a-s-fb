@@ -91,7 +91,85 @@ class CategoriaControllerTest extends TestCase
             ->get(route('categorias.show', $categoria));
 
         $response->assertOk()
+            ->assertSee(asset('images/bradesco-app-icon.png'), false)
             ->assertSee('<strong class="category-stat-value">2</strong>', false)
             ->assertSee('<strong class="category-stat-value">1</strong>', false);
+    }
+
+    public function test_regular_user_can_view_active_category_without_edit_action(): void
+    {
+        $usuario = User::factory()->create([
+            'tipo_usuario' => 'usuario',
+        ]);
+        $categoria = Categoria::create([
+            'nome' => 'Empregos',
+            'descricao' => 'Vagas disponíveis.',
+            'ativa' => true,
+        ]);
+
+        $response = $this->actingAs($usuario)
+            ->get(route('categorias.show', $categoria));
+
+        $response->assertOk()
+            ->assertSee('Empregos')
+            ->assertDontSee('Editar categoria');
+    }
+
+    public function test_regular_user_cannot_view_inactive_category(): void
+    {
+        $usuario = User::factory()->create([
+            'tipo_usuario' => 'usuario',
+        ]);
+        $categoria = Categoria::create([
+            'nome' => 'Categoria arquivada',
+            'descricao' => null,
+            'ativa' => false,
+        ]);
+
+        $response = $this->actingAs($usuario)
+            ->get(route('categorias.show', $categoria));
+
+        $response->assertNotFound();
+    }
+
+    public function test_administrator_can_view_inactive_category_and_edit_action(): void
+    {
+        $administrador = User::factory()->create([
+            'tipo_usuario' => 'administrador',
+        ]);
+        $categoria = Categoria::create([
+            'nome' => 'Categoria arquivada',
+            'descricao' => null,
+            'ativa' => false,
+        ]);
+
+        $response = $this->actingAs($administrador)
+            ->get(route('categorias.show', $categoria));
+
+        $response->assertOk()
+            ->assertSee('Inativa')
+            ->assertSee(route('categorias.edit', $categoria), false)
+            ->assertSee('Editar categoria');
+    }
+
+    public function test_category_details_escape_dangerous_name_and_description(): void
+    {
+        $administrador = User::factory()->create([
+            'tipo_usuario' => 'administrador',
+        ]);
+        $categoria = Categoria::create([
+            'nome' => '<script>alert("nome")</script>',
+            'descricao' => '<img src=x onerror=alert("descricao")>',
+            'ativa' => true,
+        ]);
+
+        $response = $this->actingAs($administrador)
+            ->get(route('categorias.show', $categoria));
+
+        $response->assertOk()
+            ->assertSee('&lt;script&gt;', false)
+            ->assertSee('&lt;img src=x onerror=alert(&quot;descricao&quot;)&gt;', false)
+            ->assertDontSee('<script>alert("nome")</script>', false)
+            ->assertDontSee('<img src=x onerror=alert("descricao")>', false);
     }
 }

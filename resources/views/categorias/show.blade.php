@@ -80,14 +80,11 @@
             box-shadow: 0 6px 16px rgba(204, 9, 47, .08);
         }
 
-        .category-symbol svg {
-            width: 25px;
-            height: 25px;
-            fill: none;
-            stroke: currentColor;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            stroke-width: 1.8;
+        .category-symbol img {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            object-fit: contain;
         }
 
         .category-eyebrow {
@@ -158,6 +155,12 @@
             background: #A80726;
             box-shadow: 0 11px 22px rgba(204, 9, 47, .2);
             color: #fff;
+        }
+
+        .category-back:focus-visible,
+        .category-edit:focus-visible {
+            outline: 3px solid #7A9FF5;
+            outline-offset: 3px;
         }
 
         .category-card-body {
@@ -371,6 +374,12 @@
                 padding: 16px;
             }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+            .category-edit {
+                transition: none;
+            }
+        }
     </style>
 @endpush
 
@@ -390,19 +399,16 @@
             <header class="category-card-header">
                 <div class="category-title-group">
                     <span class="category-symbol" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11l9 9-7 7-9-9V5.5Z"></path>
-                            <circle cx="7.5" cy="7.5" r=".75"></circle>
-                        </svg>
+                        <img src="{{ asset('images/bradesco-app-icon.png') }}" alt="">
                     </span>
                     <div>
                         <p class="category-eyebrow">Categoria</p>
                         <h2 class="category-name">{{ $categoria->nome }}</h2>
 
                         @if($categoria->ativa)
-                            <span class="category-status category-status-active">Ativa</span>
+                            <span class="category-status category-status-active" role="status">Ativa</span>
                         @else
-                            <span class="category-status category-status-inactive">Inativa</span>
+                            <span class="category-status category-status-inactive" role="status">Inativa</span>
                         @endif
                     </div>
                 </div>
@@ -436,7 +442,7 @@
                             </span>
                             <div>
                                 <p class="category-stat-label">Anúncios</p>
-                                <strong class="category-stat-value">{{ $categoria->anuncios_count }}</strong>
+                                <strong class="category-stat-value">{{ $categoria->anuncios_count ?? 0 }}</strong>
                             </div>
                         </div>
 
@@ -450,7 +456,7 @@
                             </span>
                             <div>
                                 <p class="category-stat-label">Serviços</p>
-                                <strong class="category-stat-value">{{ $categoria->servicos_count }}</strong>
+                                <strong class="category-stat-value">{{ $categoria->servicos_count ?? 0 }}</strong>
                             </div>
                         </div>
                     </div>
@@ -459,11 +465,27 @@
                 <dl class="category-metadata">
                     <div class="category-metadata-item">
                         <dt>Cadastrada em</dt>
-                        <dd>{{ $categoria->created_at?->format('d/m/Y \à\s H:i') ?? '—' }}</dd>
+                        <dd>
+                            @if($categoria->created_at)
+                                <time datetime="{{ $categoria->created_at->toIso8601String() }}">
+                                    {{ $categoria->created_at->format('d/m/Y \à\s H:i') }}
+                                </time>
+                            @else
+                                —
+                            @endif
+                        </dd>
                     </div>
                     <div class="category-metadata-item">
                         <dt>Última atualização</dt>
-                        <dd>{{ $categoria->updated_at?->format('d/m/Y \à\s H:i') ?? '—' }}</dd>
+                        <dd>
+                            @if($categoria->updated_at)
+                                <time datetime="{{ $categoria->updated_at->toIso8601String() }}">
+                                    {{ $categoria->updated_at->format('d/m/Y \à\s H:i') }}
+                                </time>
+                            @else
+                                —
+                            @endif
+                        </dd>
                     </div>
                 </dl>
             </div>
